@@ -1,0 +1,7 @@
+flask
+flasgger
+scikit-learn
+watchdog
+gunicorn
+joblib
+numpy
