@@ -10,8 +10,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v3
+
+      - name: Setup SSH deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
 
       - name: Deploy to remote VM via SSH
         uses: appleboy/ssh-action@master
@@ -21,9 +28,10 @@ jobs:
           key: ${{ secrets.VM_SSH_KEY }}
           script: |
             if [ ! -d ~/inference_service/.git ]; then
-              git clone https://github.com/${{ github.repository }} ~/inference_service
+              GIT_SSH_COMMAND="ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+              git clone git@github.com:${{ github.repository }} ~/inference_service
             fi
             cd ~/inference_service
             git pull
             docker-compose down || true
-            docker-compose up -d --build        
+            docker-compose up -d --build
