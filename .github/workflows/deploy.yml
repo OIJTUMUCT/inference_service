@@ -2,8 +2,8 @@ name: Deploy to VM
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - 'v*'
 
 jobs:
   deploy:
@@ -32,6 +32,7 @@ jobs:
               git clone git@github.com:${{ github.repository }} ~/inference_service
             fi
             cd ~/inference_service
-            git pull
+            git fetch --all
+            git checkout ${{ github.ref_name }}
             docker-compose down || true
             docker-compose up -d --build
