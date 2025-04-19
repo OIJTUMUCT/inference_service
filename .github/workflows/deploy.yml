@@ -32,7 +32,7 @@ jobs:
               git clone git@github.com:${{ github.repository }} ~/inference_service
             fi
             cd ~/inference_service
-            git fetch --all
-            git checkout ${{ github.ref_name }}
+            git fetch --all --tags
+            git checkout tags/${{ github.ref_name }}
             docker-compose down || true
             docker-compose up -d --build
