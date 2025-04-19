@@ -5,3 +5,10 @@ watchdog
 gunicorn
 joblib
 numpy
+pandas
+redis
+celery
+flower
+Flask-Compress
+flask-cors==4.0.0
+flask-restful
