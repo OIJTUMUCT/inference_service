@@ -1,8 +1,8 @@
 from flask import Flask, jsonify, Response
 from flask_compress import Compress
 from flasgger import Swagger
-from redis_cache import get_segments_json_from_redis, get_segments_updated_at
-from segmentation_tasks.tasks import run_segmentation
+from redis_cache import get_segments_json_from_redis, get_segments_updated_at, load_cohort_from_redis
+from segmentation_tasks.tasks import run_segmentation, run_cohort_analysis
 from celery.result import AsyncResult
 import sys
 import logging
@@ -24,8 +24,8 @@ swagger = Swagger(app, parse=True, template={
 })
 
 with app.app_context():
-    from segmentation_tasks.tasks import run_segmentation
     run_segmentation.delay()
+    run_cohort_analysis.delay()
 
 @app.route("/ping", methods=["GET"])
 def ping():
@@ -186,6 +186,19 @@ def get_segments_meta():
         return jsonify({"updated": updated_at})
     return jsonify({"error": "Метаданные не найдены"}), 404
 
+@app.route("/cohort", methods=["GET"])
+def get_latest_cohort_result():
+    try:
+        result = load_cohort_from_redis()
+        return jsonify({
+            "updated_at": result["updated_at"],
+            "state_list": result["state_list"],
+            "retention": result["retention"],
+            "cohort_data": result["cohort_data"],
+            "regional_cohort": result["regional_cohort"]
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)
