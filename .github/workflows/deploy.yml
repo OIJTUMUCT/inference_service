@@ -29,10 +29,12 @@ jobs:
           script: |
             if [ ! -d ~/inference_service/.git ]; then
               GIT_SSH_COMMAND="ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+              git clone --depth=1 --branch ${{ github.ref_name }} git@github.com:${{ github.repository }} ~/inference_service || \
               git clone git@github.com:${{ github.repository }} ~/inference_service
             fi
             cd ~/inference_service
-            git fetch --all --tags
-            git checkout tags/${{ github.ref_name }}
+            GIT_SSH_COMMAND="ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" git fetch --all --tags
+            GIT_SSH_COMMAND="ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" git checkout tags/${{ github.ref_name }} || git checkout ${{ github.ref_name }}
             docker-compose down || true
             docker-compose up -d --build
+
