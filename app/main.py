@@ -1,12 +1,14 @@
 from flask import Flask, jsonify, Response
 from flask_compress import Compress
 from flasgger import Swagger
-from redis_cache import get_segments_json_from_redis, get_segments_updated_at, load_cohort_from_redis
-from segmentation_tasks.tasks import run_segmentation, run_cohort_analysis
+from redis_cache import get_segments_json_from_redis, get_segments_updated_at, load_cohort_from_redis, load_timeline_from_redis
+from segmentation_tasks.tasks import run_segmentation, run_cohort_analysis, run_timeline
 from celery.result import AsyncResult
 import sys
 import logging
 from flask_cors import CORS
+import json
+from datetime import datetime
 
 logging.basicConfig(level=logging.INFO)
 
@@ -26,6 +28,7 @@ swagger = Swagger(app, parse=True, template={
 with app.app_context():
     run_segmentation.delay()
     run_cohort_analysis.delay()
+    run_timeline.delay()
 
 @app.route("/ping", methods=["GET"])
 def ping():
@@ -197,6 +200,19 @@ def get_latest_cohort_result():
             "cohort_data": result["cohort_data"],
             "regional_cohort": result["regional_cohort"]
         })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/timeline", methods=["GET"])
+def get_latest_timeline():
+    try:
+        result = load_timeline_from_redis()
+
+        if isinstance(result.get("updated_at"), datetime):
+            result["updated_at"] = result["updated_at"].isoformat()
+
+        json_str = json.dumps(result, ensure_ascii=False)
+        return Response(json_str, content_type="application/json; charset=utf-8")
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
