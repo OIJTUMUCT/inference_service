@@ -191,6 +191,41 @@ def get_segments_meta():
 
 @app.route("/cohort", methods=["GET"])
 def get_latest_cohort_result():
+    """
+    Получить последние когортные данные
+    ---
+    responses:
+      200:
+        description: Успешное получение когортного анализа
+        schema:
+          type: object
+          properties:
+            updated_at:
+              type: string
+              example: "2025-04-20T14:40:40"
+            state_list:
+              type: array
+              items:
+                type: string
+              example: ["SP", "RJ", "MG"]
+            retention:
+              type: array
+              items:
+                type: object
+              example: [{"cohort": "2018-01", "0": 1.0, "1": 0.4}]
+            cohort_data:
+              type: array
+              items:
+                type: object
+              example: [{"cohort": "2018-01", "customer_id": "abc", "month": 0}]
+            regional_cohort:
+              type: array
+              items:
+                type: object
+              example: [{"state": "SP", "cohort": "2018-01", "retention": [1.0, 0.6, 0.3]}]
+      500:
+        description: Ошибка получения данных из Redis
+    """
     try:
         result = load_cohort_from_redis()
         return jsonify({
@@ -205,6 +240,50 @@ def get_latest_cohort_result():
 
 @app.route("/timeline", methods=["GET"])
 def get_latest_timeline():
+    """
+    Получить временные данные сегментов и оттока
+    ---
+    responses:
+      200:
+        description: Успешное получение временных данных
+        schema:
+          type: object
+          properties:
+            updated_at:
+              type: string
+              example: "2025-04-20T14:40:40"
+            by_churn:
+              type: array
+              items:
+                type: object
+                properties:
+                  order_purchase_timestamp:
+                    type: string
+                    example: "2018-08"
+                  Churn_Risk:
+                    type: string
+                    example: "Высокий риск"
+                  count:
+                    type: integer
+                    example: 5041
+            by_segment:
+              type: array
+              items:
+                type: object
+                properties:
+                  order_purchase_timestamp:
+                    type: string
+                    example: "2018-08"
+                  segment_description:
+                    type: string
+                    example: "Клиенты с одной покупкой, высокий денежный объем."
+                  count:
+                    type: integer
+                    example: 2353
+      500:
+        description: Ошибка получения данных из Redis
+    """
+
     try:
         result = load_timeline_from_redis()
 
