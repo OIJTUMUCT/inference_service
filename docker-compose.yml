@@ -19,6 +19,7 @@ services:
     container_name: redis_cache
     ports:
       - "6379:6379"
+    command: ["redis-server", "--slaveof", "no", "one"]
     restart: always
 
   flower:
