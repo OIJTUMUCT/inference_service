@@ -19,7 +19,16 @@ services:
     container_name: redis_cache
     ports:
       - "6379:6379"
-    command: ["redis-server", "--slaveof", "no", "one"]
+    command: [
+      "redis-server",
+      "--slaveof", "no", "one",
+      "--appendonly", "yes",
+      "--save", "900", "1",
+      "--auto-aof-rewrite-percentage", "100",
+      "--auto-aof-rewrite-min-size", "64mb"
+    ]
+    volumes:
+      - redis_data:/data
     restart: always
 
   flower:
@@ -40,10 +49,16 @@ services:
     build: .
     container_name: celery_worker
     working_dir: /app
-    command: sh -c "PYTHONPATH=/app celery -A segmentation_tasks.celery_app worker --loglevel=info"
+    command: ["supervisord", "-c", "/app/supervisord.conf"]
+    environment:
+      - PYTHONPATH=/app
     volumes:
       - ./app:/app
       - ./research:/app/research
     depends_on:
       - redis
     restart: always
+
+
+volumes:
+  redis_data:

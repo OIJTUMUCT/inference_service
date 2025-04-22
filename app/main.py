@@ -2,7 +2,7 @@ from flask import Flask, jsonify, Response
 from flask_compress import Compress
 from flasgger import Swagger
 from redis_cache import get_segments_json_from_redis, get_segments_updated_at, load_cohort_from_redis, load_timeline_from_redis
-from segmentation_tasks.tasks import run_segmentation, run_cohort_analysis, run_timeline
+from segmentation_tasks.tasks import run_segmentation
 from celery.result import AsyncResult
 import sys
 import logging
@@ -24,11 +24,6 @@ swagger = Swagger(app, parse=True, template={
         "version": "1.0"
     }
 })
-
-with app.app_context():
-    run_segmentation.delay()
-    run_cohort_analysis.delay()
-    run_timeline.delay()
 
 @app.route("/ping", methods=["GET"])
 def ping():
